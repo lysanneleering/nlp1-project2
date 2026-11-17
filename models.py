@@ -1,5 +1,5 @@
 """
-3 course implementations of classes copied from nlp-illc/nlp1-student/part2/clslib.py.
+Course implementations of 3 classes copied from nlp-illc/nlp1-student/part2/clslib.py.
 """
 
 import torch
