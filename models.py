@@ -137,6 +137,69 @@ class LSTMEncoder(nn.Module):
         return final_hidden
 
 
+class RNNEncoder(nn.Module):
+    def __init__(self, hidden_size, embedding_matrix, padding_idx=0, freeze_embeddings=True):
+        """
+        hidden_size: the size of the recurrent state
+
+        To simplify implementation, we treat the embedding layer as part of the encoder.
+
+        embedding_matrix: word vectors
+        padding_idx: the id of the pad token
+        freeze_embeddings: treat the vectors as frozen or not
+        """
+        super().__init__()
+        vocab_size, embedding_dim = embedding_matrix.shape
+        self.emb_dim = embedding_dim
+        self.hidden_size = hidden_size
+        # Pretrained embeddings
+        self.embedding = nn.Embedding.from_pretrained(
+            embedding_matrix,
+            freeze=freeze_embeddings,
+            padding_idx=padding_idx
+        )
+        # Here's the design of the update
+        # see that we can achieve the same parameterisation as explained above
+        # via h[i] = tanh(linear(concat(e, h[i-1])))
+        # so the key trainable component of the simplest recurrent encoder is this one non-linear transformation with D+H inputs and H outputs
+        self.elman_net = nn.Sequential(
+            nn.Linear(embedding_dim + hidden_size, hidden_size),
+            nn.Tanh(),
+        )
+
+    @property
+    def enc_dim(self):
+        return self.hidden_size
+
+    @property
+    def pad_idx(self):
+        return self.embedding.padding_idx
+
+    def forward(self, x):
+        """
+        Encode each sequence in the batch into a single H-dimensional vector.
+
+        x: a batch of sequences of token ids
+        """
+
+        embeddings = self.embedding(x)  # (batch_size, max_len, emb_dim)
+        # intial state
+        # zeros on the same device and with the same dtype as embeddings.
+        h = torch.zeros(x.shape[:-1] + (self.hidden_size,), dtype=embeddings.dtype, device=embeddings.device)
+        max_len = x.shape[-1]
+        for t in range(max_len):
+            e_t = embeddings[..., t, :]  # (..., emb_dim)
+            # Candidate state for every example in the batch.
+             # (..., hidden_dim)
+            h_candidate = self.elman_net(torch.cat([e_t, h], -1))
+            # Update valid positions; retain the old state at padding positions.
+            # (..., 1)
+            valid = x[..., t].ne(self.embedding.padding_idx).unsqueeze(-1)
+            # (..., hidden_dim)
+            h = torch.where(valid, h_candidate, h)
+        return h
+
+
 class SoftmaxRegressor(nn.Module):
     """
     This is a softmax regressor,
