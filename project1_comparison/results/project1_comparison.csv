@@ -1,0 +1,4 @@
+experiment,seed,train_size,validation_size,num_epochs,actual_vocab_size,accuracy,macro_f1
+Project 1: indicator + MLP,0,3257,374,20,1000,0.5989304812834224,0.5146334888331008
+Project 1: indicator + MLP,1,3257,374,20,1000,0.6042780748663101,0.5121018744895399
+Project 1: indicator + MLP,2,3257,374,20,1000,0.5962566844919787,0.5039440094836057

@@ -1,0 +1,2 @@
+experiment,accuracy_mean,accuracy_std,macro_f1_mean,macro_f1_std
+Project 1: indicator + MLP,0.5998217468805703,0.0040842920632404795,0.5102264576020822,0.005586066018867126
